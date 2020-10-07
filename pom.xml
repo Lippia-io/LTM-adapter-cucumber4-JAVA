@@ -9,20 +9,22 @@
 	
 	<url>http://lippia.io</url>
     
-	<name>lippia-cucumber4-adapter</name>
-  	<description>Cucumber-JVM 4 adapter for Lippia report server</description>
+	<name>extentreports-cucumber4-adapter</name>
+  	<description>Cucumber-JVM 4 adapter for Extent Framework</description>
 
     <developers>
 		<developer>
 			<name>Juan Manuel Carames</name>
 			<id>juan.carames</id>
 		</developer>
-        <developer>
-			<name>Ezequiel Baldizzoni</name>
-			<id>ezequiel.baldizzoni</id>
-		</developer>
 	</developers>
     
+    <scm>
+		<connection>scm:git:https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter.git</connection>
+		<developerConnection>scm:git:https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter.git</developerConnection>
+		<url>https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter</url>
+	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<cucumber.version>4.7.4</cucumber.version>
