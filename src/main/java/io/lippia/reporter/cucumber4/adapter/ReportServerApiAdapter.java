@@ -177,7 +177,8 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
 				String image = getBase64Image();
 				if(image!=null) {
 					stepLog.updateResult(status, result.getErrorMessage(), getBase64Image());
-					break;
+				} else {
+                    stepLog.updateResult(status, result.getErrorMessage());
 				}
 	        	break;
 	        default:
