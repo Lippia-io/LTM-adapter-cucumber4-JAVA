@@ -324,8 +324,11 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
         if (examples.getName() != null && !examples.getName().isEmpty()) {
             markup = examples.getName() + markup;
         }
-        markup = scenarioOutlineThreadLocal.get().getDescription() + markup;
-        scenarioOutlineThreadLocal.get().setDescription(markup);
+        
+        String description = scenarioOutlineThreadLocal.get().getDescription();
+        description = description == null ? "" : description;
+        
+        scenarioOutlineThreadLocal.get().setDescription(description + markup);
     }
     
     private String[][] getTable(List<TableRow> rows) {
