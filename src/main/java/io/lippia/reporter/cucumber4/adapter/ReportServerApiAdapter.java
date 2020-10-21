@@ -19,7 +19,6 @@ import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
 import cucumber.api.formatter.StrictAware;
-import gherkin.ast.DataTable;
 import gherkin.ast.DocString;
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
@@ -36,11 +35,12 @@ import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleString;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
-import io.lippia.reportServer.api.client.LippiaReportServerApiClient;
 import io.lippia.reportServer.api.model.InitializeResponseDTO;
 import io.lippia.reportServer.api.model.LogDTO;
 import io.lippia.reportServer.api.model.StatusDTO;
 import io.lippia.reportServer.api.model.TestDTO;
+import io.lippia.reporter.api.client.LippiaReportServerApiClient;
+import io.lippia.reporter.service.Markup;
 import io.lippia.reporter.service.MarkupHelper;
 import io.lippia.reporter.service.PropertiesService;
 
@@ -72,48 +72,16 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     private ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
     private ThreadLocal<ScenarioOutline> currentScenarioOutline = new InheritableThreadLocal<>();
     
-    public ReportServerApiAdapter(String arg) {
+    public ReportServerApiAdapter() {
 		super();
 	}
 
-	private EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
-        @Override
-        public void receive(TestSourceRead event) {
-            handleTestSourceRead(event);
-        }
-    };
-    private EventHandler<TestCaseStarted> caseStartedHandler= new EventHandler<TestCaseStarted>() {
-        @Override
-        public void receive(TestCaseStarted event) {
-            handleTestCaseStarted(event);
-        }
-    };
-    
-    private EventHandler<TestCaseFinished> caseFinishHandler= new EventHandler<TestCaseFinished>() {
-        @Override
-        public void receive(TestCaseFinished event) {
-            handleTestCaseFinished(event);
-        }
-    };
-    
-    private EventHandler<TestStepStarted> stepStartedHandler = new EventHandler<TestStepStarted>() {
-        @Override
-        public void receive(TestStepStarted event) {
-            handleTestStepStarted(event);
-        }
-    };
-    private EventHandler<TestStepFinished> stepFinishedHandler = new EventHandler<TestStepFinished>() {
-        @Override
-        public void receive(TestStepFinished event) {
-            handleTestStepFinished(event);
-        }
-    };
-    private EventHandler<TestRunFinished> runFinishedHandler = new EventHandler<TestRunFinished>() {
-        @Override
-        public void receive(TestRunFinished event) {
-            LippiaReportServerApiClient.finishReport(report);
-        }
-    };
+	private EventHandler<TestSourceRead> testSourceReadHandler = this::handleTestSourceRead;
+    private EventHandler<TestCaseStarted> caseStartedHandler= this::handleTestCaseStarted;
+    private EventHandler<TestCaseFinished> caseFinishHandler = this::handleTestCaseFinished;
+    private EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
+    private EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
+    private EventHandler<TestRunFinished> runFinishedHandler = event -> LippiaReportServerApiClient.finishReport(report);
 
 	@Override
     public void setEventPublisher(EventPublisher publisher) {
@@ -170,26 +138,22 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
     
     synchronized LogDTO updateResult(LogDTO stepLog, Result result) {
-    	StatusDTO status = StatusDTO.fromLowerCaseName(result.getStatus().name());
-    			
-    	switch (result.getStatus()) {
-	        case FAILED:
-				String image = getBase64Image();
-				if(image!=null) {
-					stepLog.updateResult(status, result.getErrorMessage(), getBase64Image());
-				} else {
-                    stepLog.updateResult(status, result.getErrorMessage());
-				}
-	        	break;
-	        default:
-	        	stepLog.updateResult(status, result.getErrorMessage());
-	            break;
+		String image = getBase64Image();
+		StatusDTO status = StatusDTO.fromLowerCaseName(result.getStatus().name());
+		
+		if(result.getStatus() == Result.Type.FAILED && image != null) {
+			stepLog.updateResult(status, result.getErrorMessage(), getBase64Image());   
+	    	return stepLog;
     	}
+    	
+    	stepLog.updateResult(status, result.getErrorMessage());
+	           
     	return stepLog;
     }
 
     private synchronized void handleStartOfFeature(TestCase testCase) {
-        if (currentFeatureFile == null || !currentFeatureFile.equals(testCase.getUri())) {
+	    String uri = currentFeatureFile.get();
+	    if(uri == null || !uri.equals(testCase.getUri())) {
             currentFeatureFile.set(testCase.getUri());
             createFeature(testCase);
         }
@@ -248,7 +212,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
         if (TestSourcesModel.isScenarioOutlineScenario(astNode)) {
             ScenarioOutline scenarioOutline = (ScenarioOutline)TestSourcesModel.getScenarioDefinition(astNode);
             if (currentScenarioOutline.get() == null || !currentScenarioOutline.get().getName().equals(scenarioOutline.getName())) {
-                scenarioOutlineThreadLocal.set(null);
+                scenarioOutlineThreadLocal.remove();
                 createScenarioOutline(scenarioOutline);
                 currentScenarioOutline.set(scenarioOutline);
                 addOutlineStepsToReport(scenarioOutline);
@@ -261,8 +225,8 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             }
             
         } else {
-            scenarioOutlineThreadLocal.set(null);
-            currentScenarioOutline.set(null);
+            scenarioOutlineThreadLocal.remove();
+            currentScenarioOutline.remove();
         }
     }
 
@@ -287,8 +251,8 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             
             scenarioOutline.getTags()
             	.stream()
-            	.map(x -> x.getName())
-            	.filter(x -> !featureTags.contains(x))
+            	.map(Tag::getName)
+            	.filter(featureTags::contains)
             	.forEach(t::assignCategory);
           
 			scenarioOutlineThreadLocal.set(t);
@@ -302,15 +266,13 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
                 Node argument = step.getArgument();
                 if (argument instanceof DocString) {
                     createDocStringMap((DocString)argument);
-                } else if (argument instanceof DataTable) {
-                    
                 }
             }
         }
     }
 
     private Map<String, Object> createDocStringMap(DocString docString) {
-        Map<String, Object> docStringMap = new HashMap<String, Object>();
+        Map<String, Object> docStringMap = new HashMap<>();
         docStringMap.put("value", docString.getContent());
         return docStringMap;
     }
@@ -332,7 +294,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
     
     private String[][] getTable(List<TableRow> rows) {
-        String data[][] = null;
+        String[][] data = null;
         int rowSize = rows.size();
         for (int i = 0; i < rowSize; i++) {
             TableRow row = rows.get(i);
@@ -375,10 +337,38 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     synchronized LogDTO createTestStep(PickleStepTestStep testStep) {
-        String stepName = testStep.getStepText();
+        
+        LogDTO stepLog = extractStepLog(testStep);
+        
+        if (testStep.getStepArgument().isEmpty()) {
+        	return stepLog;
+        }
+	
+        Argument argument = testStep.getStepArgument().get(0);
+        if (argument instanceof PickleString) {
+            createDocStringMap((PickleString)argument);
+        	return stepLog;
+        } 
+        
+        if(stepLog == null) {
+        	return null;
+        }
+        
+        List<PickleRow> rows = ((PickleTable) argument).getRows();
+        
+        Markup createTable = MarkupHelper.createTable(getPickleTable(rows));
+        if(createTable != null) {
+        	stepLog.updateResult(StatusDTO.PASSED, createTable.getMarkup());
+        }
+            
+        return stepLog;
+    }
+    
+    private LogDTO extractStepLog(PickleStepTestStep testStep) {
+    	LogDTO stepLog = null;
+    	String stepName = testStep.getStepText();
         TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testStep.getStepLine());
-        LogDTO stepLog = null;
-        if (astNode != null) {
+		if (astNode != null) {
             Step step = (Step) astNode.node;
             String name = stepName == null || stepName.isEmpty() 
                     ? step.getText().replace("<", "&lt;").replace(">", "&gt;")
@@ -386,26 +376,11 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
                     
                     stepLog = new LogDTO(scenarioThreadLocal.get(), step.getKeyword() + name);        
         }
+		return stepLog;
+	}
 
-        	
-        if (!testStep.getStepArgument().isEmpty()) {
-            Argument argument = testStep.getStepArgument().get(0);
-            if (argument instanceof PickleString) {
-                createDocStringMap((PickleString)argument);
-            } else if (argument instanceof PickleTable) {
-                List<PickleRow> rows = ((PickleTable) argument).getRows();
-                stepLog.updateResult(StatusDTO.PASSED, MarkupHelper.createTable(getPickleTable(rows)).getMarkup());
-                
-//                stepTestThreadLocal.get().pass(MarkupHelper.createTable(getPickleTable(rows)).getMarkup());
-            }
-        }
-
-        
-        return stepLog;
-    }
-    
-    private String[][] getPickleTable(List<PickleRow> rows) {
-        String data[][] = null;
+	private String[][] getPickleTable(List<PickleRow> rows) {
+        String[][] data = null;
         int rowSize = rows.size();
         for (int i = 0; i < rowSize; i++) {
             PickleRow row = rows.get(i);
@@ -422,7 +397,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     private Map<String, Object> createDocStringMap(PickleString docString) {
-        Map<String, Object> docStringMap = new HashMap<String, Object>();
+        Map<String, Object> docStringMap = new HashMap<>();
         docStringMap.put("value", docString.getContent());
         return docStringMap;
     }
@@ -448,7 +423,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
      */
     public static void addExtraInfo(String title, String description) {
         if (extraInfoThreadLocal.get() == null) {
-            extraInfoThreadLocal.set(new HashMap<String, String>());
+            extraInfoThreadLocal.set(new HashMap<>());
         }
         extraInfoThreadLocal.get().put(title, description);
     }

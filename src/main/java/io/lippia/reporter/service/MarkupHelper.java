@@ -1,7 +1,11 @@
 package io.lippia.reporter.service;
 
 public class MarkupHelper {
-    public static Markup createLabel(String text, Color color) {
+	
+    private MarkupHelper() {
+	}
+
+	public static Markup createLabel(String text, Color color) {
         Label l = new Label();
         l.setText(text);
         l.setColor(color);

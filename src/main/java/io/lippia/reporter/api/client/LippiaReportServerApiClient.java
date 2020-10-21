@@ -1,6 +1,4 @@
-package io.lippia.reportServer.api.client;
-
-import java.util.HashMap;
+package io.lippia.reporter.api.client;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +11,10 @@ import io.lippia.reportServer.api.model.TestDTO;
 
 public class LippiaReportServerApiClient {
 
+	private static final String APPLICATION_JSON = "application/json";
+
+	private static final String CONTENT_TYPE = "Content-Type";
+
 	private static final String DEFAULT_REPORT_SERVER_API_URL = "http://localhost:8080";
 
 	private static final String REPORT_SERVER_API_HOST_KEY = "LIPPIA_RS_API_HOST";
@@ -21,14 +23,15 @@ public class LippiaReportServerApiClient {
 	private static final String REPORT_SERVER_API_URI = "LIPPIA_RS_API_URI";
 
 	private static RestTemplate restTemplate = new RestTemplate();
+	
+	private LippiaReportServerApiClient() {
+	}
 
 	public static InitializeResponseDTO initialize() {
 		String url = getAPIUrl() + "/initialize";
 		InitializeDTO init = new InitializeDTO(System.getProperty("LIPPIA_RS_PROJECT_NAME"), System.getProperty("LIPPIA_RS_REPORT_NAME"));
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
-		HttpEntity<InitializeDTO> request = new HttpEntity<InitializeDTO>(init, headers);
+		HttpEntity<InitializeDTO> request = new HttpEntity<>(init, getApiHeaders());
 
 		return restTemplate.postForObject(url, request, InitializeResponseDTO.class);
 	}
@@ -36,43 +39,41 @@ public class LippiaReportServerApiClient {
 	public static void finish(TestDTO test) {
 		String url = getAPIUrl() + "/test/finish";
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
-		HttpEntity<TestDTO> request = new HttpEntity<TestDTO>(test, headers);
+		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 
-		restTemplate.postForObject(url, request, String.class, headers);
+		restTemplate.postForObject(url, request, String.class);
 	}
 
 	public static TestDTO create(TestDTO test) {
 		String url = getAPIUrl() + "/test/new";
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
-		HttpEntity<TestDTO> request = new HttpEntity<TestDTO>(test, headers);
+		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 
-		return restTemplate.postForObject(url, request, TestDTO.class, headers);
+		return restTemplate.postForObject(url, request, TestDTO.class);
 	}
 
 	public static void log(LogDTO log) {
 		String url = getAPIUrl() + "/test/log";
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
-		HttpEntity<LogDTO> request = new HttpEntity<LogDTO>(log, headers);
+		HttpEntity<LogDTO> request = new HttpEntity<>(log, getApiHeaders());
 		
-		restTemplate.postForObject(url, request, String.class, headers);
+		restTemplate.postForObject(url, request, String.class);
 	}
 
 	public static void finishReport(InitializeResponseDTO report) {
 		String url = getAPIUrl() + "/finalize";
 		
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
 		TestDTO test = new TestDTO();
 		test.setExcecutionIdentifier(report.getExcecutionIdentifier());
-		HttpEntity<TestDTO> request = new HttpEntity<TestDTO>(test, headers);
+		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 		
-		restTemplate.postForObject(url, request, String.class, headers);
+		restTemplate.postForObject(url, request, String.class);
+	}
+	
+	private static HttpHeaders getApiHeaders() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.set(CONTENT_TYPE, APPLICATION_JSON);
+		return headers;
 	}
 
 	private static String getAPIUrl() {

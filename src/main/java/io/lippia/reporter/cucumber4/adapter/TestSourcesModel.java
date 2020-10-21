@@ -26,9 +26,9 @@ import gherkin.ast.TableRow;
  *
  */
 public final class TestSourcesModel {
-	private final Map<String, TestSourceRead> pathToReadEventMap = new HashMap<String, TestSourceRead>();
-	private final Map<String, GherkinDocument> pathToAstMap = new HashMap<String, GherkinDocument>();
-	private final Map<String, Map<Integer, AstNode>> pathToNodeMap = new HashMap<String, Map<Integer, AstNode>>();
+	private final Map<String, TestSourceRead> pathToReadEventMap = new HashMap<>();
+	private final Map<String, GherkinDocument> pathToAstMap = new HashMap<>();
+	private final Map<String, Map<Integer, AstNode>> pathToNodeMap = new HashMap<>();
 
 	static Feature getFeatureForTestCase(AstNode astNode) {
 		while (astNode.parent != null) {
@@ -48,7 +48,23 @@ public final class TestSourcesModel {
 	}
 
 	static ScenarioDefinition getScenarioDefinition(AstNode astNode) {
-		return astNode.node instanceof ScenarioDefinition ? (ScenarioDefinition) astNode.node : (ScenarioDefinition) astNode.parent.parent.node;
+		if(astNode == null) {
+			return null;
+		}
+		
+		if(astNode.node instanceof ScenarioDefinition) {
+			return (ScenarioDefinition) astNode.node;
+		}
+		
+		if(astNode.parent == null) {
+			return null;
+		}
+		
+		if(astNode.parent.parent == null) {
+			return null;
+		}
+		
+		return (ScenarioDefinition) astNode.parent.parent.node;
 	}
 
 	static boolean isScenarioOutlineScenario(AstNode astNode) {
@@ -126,7 +142,10 @@ public final class TestSourcesModel {
 		Feature feature = getFeature(uri);
 		if (feature != null) {
 			TestSourceRead event = getTestSourceReadEvent(uri);
-			String trimmedSourceLine = event.source.split("\n")[stepLine - 1].trim();
+			String trimmedSourceLine = "";
+			if(event != null) {
+				trimmedSourceLine = event.source.split("\n")[stepLine - 1].trim();
+			}
 			GherkinDialect dialect = new GherkinDialectProvider(feature.getLanguage()).getDefaultDialect();
 			for (String keyword : dialect.getStepKeywords()) {
 				if (trimmedSourceLine.startsWith(keyword)) {
@@ -156,12 +175,12 @@ public final class TestSourcesModel {
 		if (!pathToReadEventMap.containsKey(path)) {
 			return;
 		}
-		Parser<GherkinDocument> parser = new Parser<GherkinDocument>(new AstBuilder());
+		Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
 		TokenMatcher matcher = new TokenMatcher();
 		try {
 			GherkinDocument gherkinDocument = parser.parse(pathToReadEventMap.get(path).source, matcher);
 			pathToAstMap.put(path, gherkinDocument);
-			Map<Integer, AstNode> nodeMap = new HashMap<Integer, AstNode>();
+			Map<Integer, AstNode> nodeMap = new HashMap<>();
 			AstNode currentParent = new AstNode(gherkinDocument.getFeature(), null);
 			for (ScenarioDefinition child : gherkinDocument.getFeature().getChildren()) {
 				processScenarioDefinition(nodeMap, child, currentParent);

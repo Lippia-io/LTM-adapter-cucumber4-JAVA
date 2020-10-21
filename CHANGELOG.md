@@ -1,14 +1,17 @@
 # Changelog 
 All notable changes to this project will be documented in this file.
 
+## 1.5.1 (21/10/2020)
+- Code Clean and bug solving.
+
 ## 1.5 (21/10/2020)
 - Solve null description on table examples.
 
 ## 1.4 (07/10/2020)
-- Solve Bug - error 403 whe script send test finish.
+- Solve Bug - error 403 when script send test finish.
 
 ## 1.3 (07/10/2020)
-- Full dockerization.  
+- Full dockerization to will use with lippia framework on same container.  
 
 ## 1.2 (19/6/2020)
 - change in ExtentCucumberGenericAdapter log stacktrace: now create the stacktrace with codeBlock of MarkupHelper.  

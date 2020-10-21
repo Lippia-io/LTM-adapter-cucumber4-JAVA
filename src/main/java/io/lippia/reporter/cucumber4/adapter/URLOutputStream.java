@@ -125,7 +125,6 @@ class URLOutputStream extends OutputStream {
 
   class ResponseException extends IOException {
 	private static final long serialVersionUID = 7564052957642239835L;
-	private final Gson gson = new Gson();
     private final int responseCode;
     private final String contentType;
 
@@ -138,7 +137,8 @@ class URLOutputStream extends OutputStream {
     @Override
     public String getMessage() {
       if (contentType.equals("application/json")) {
-        @SuppressWarnings("rawtypes")
+    	final Gson gson = new Gson();
+    	@SuppressWarnings("rawtypes")
 		Map map = gson.fromJson(super.getMessage(), Map.class);
         if (map.containsKey("error")) {
           return getMessage0(map.get("error").toString());
@@ -151,7 +151,7 @@ class URLOutputStream extends OutputStream {
     }
 
     private String getMessage0(String message) {
-      return String.format("%s %s\nHTTP %d\n%s", method, url, responseCode, message);
+      return String.format("%s %s HTTP %d %s", method, url, responseCode, message);
     }
   }
 }

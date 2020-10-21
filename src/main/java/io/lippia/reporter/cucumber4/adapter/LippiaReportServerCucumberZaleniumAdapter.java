@@ -7,7 +7,6 @@ import cucumber.api.event.TestStepFinished;
 public abstract class LippiaReportServerCucumberZaleniumAdapter extends ReportServerApiAdapter{
 
 	public LippiaReportServerCucumberZaleniumAdapter(String arg) {
-		super(arg);
 	}
 	
 	@Override

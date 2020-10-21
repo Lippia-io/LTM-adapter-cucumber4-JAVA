@@ -3,8 +3,7 @@ package io.lippia.reporter.service;
 import java.io.Serializable;
 import java.util.Properties;
 
-public class PropertiesService 
-    implements Serializable {
+public class PropertiesService implements Serializable {
 
     private static final long serialVersionUID = -5008231199972325650L;
     
@@ -12,7 +11,16 @@ public class PropertiesService
     
     public static Object getProperty(String key) {
         String sys = System.getProperty(key);
-        return sys == null ? (properties == null ? null : properties.get(key)) : sys;
+        
+        if(sys != null) {
+        	return sys;
+        }
+        
+        if(properties != null) {
+        	return properties.get(key);
+        }
+        
+        return null;
     }
     
 }
