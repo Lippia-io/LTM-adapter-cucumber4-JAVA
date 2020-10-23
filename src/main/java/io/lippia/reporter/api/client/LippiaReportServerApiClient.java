@@ -33,7 +33,11 @@ public class LippiaReportServerApiClient {
 
 		HttpEntity<InitializeDTO> request = new HttpEntity<>(init, getApiHeaders());
 
-		return restTemplate.postForObject(url, request, InitializeResponseDTO.class);
+		return getRestInstance().postForObject(url, request, InitializeResponseDTO.class);
+	}
+
+	private static RestTemplate getRestInstance() {
+		return restTemplate;
 	}
 
 	public static void finish(TestDTO test) {
@@ -41,7 +45,7 @@ public class LippiaReportServerApiClient {
 
 		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 
-		restTemplate.postForObject(url, request, String.class);
+		getRestInstance().postForObject(url, request, String.class);
 	}
 
 	public static TestDTO create(TestDTO test) {
@@ -49,7 +53,7 @@ public class LippiaReportServerApiClient {
 
 		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 
-		return restTemplate.postForObject(url, request, TestDTO.class);
+		return getRestInstance().postForObject(url, request, TestDTO.class);
 	}
 
 	public static void log(LogDTO log) {
@@ -57,7 +61,7 @@ public class LippiaReportServerApiClient {
 
 		HttpEntity<LogDTO> request = new HttpEntity<>(log, getApiHeaders());
 		
-		restTemplate.postForObject(url, request, String.class);
+		getRestInstance().postForObject(url, request, String.class);
 	}
 
 	public static void finishReport(InitializeResponseDTO report) {
@@ -67,7 +71,7 @@ public class LippiaReportServerApiClient {
 		test.setExcecutionIdentifier(report.getExcecutionIdentifier());
 		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 		
-		restTemplate.postForObject(url, request, String.class);
+		getRestInstance().postForObject(url, request, String.class);
 	}
 	
 	private static HttpHeaders getApiHeaders() {
