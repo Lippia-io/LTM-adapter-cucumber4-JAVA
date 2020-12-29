@@ -21,6 +21,7 @@ public class LippiaReportServerApiClient {
 	private static final String REPORT_SERVER_API_PORT_KEY = "LIPPIA_RS_API_PORT";
 
 	private static final String REPORT_SERVER_API_URI = "LIPPIA_RS_API_URI";
+	private static final String REPORT_SERVER_RUN_IDENTIFIER = "rs.run.id";
 
 	private static RestTemplate restTemplate = new RestTemplate();
 	
@@ -28,6 +29,11 @@ public class LippiaReportServerApiClient {
 	}
 
 	public static InitializeResponseDTO initialize() {
+		String identifier = System.getProperty(REPORT_SERVER_RUN_IDENTIFIER);
+		if(identifier != null) {
+			return new InitializeResponseDTO(identifier);
+		}
+			
 		String url = getAPIUrl() + "/initialize";
 		InitializeDTO init = new InitializeDTO(System.getProperty("LIPPIA_RS_PROJECT_NAME"), System.getProperty("LIPPIA_RS_REPORT_NAME"));
 
