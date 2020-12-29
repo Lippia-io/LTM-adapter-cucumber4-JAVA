@@ -71,6 +71,11 @@ public class LippiaReportServerApiClient {
 	}
 
 	public static void finishReport(InitializeResponseDTO report) {
+		String identifier = System.getProperty(REPORT_SERVER_RUN_IDENTIFIER);
+		if(identifier != null) {
+			return;
+		}
+		
 		String url = getAPIUrl() + "/finalize";
 		
 		TestDTO test = new TestDTO();
