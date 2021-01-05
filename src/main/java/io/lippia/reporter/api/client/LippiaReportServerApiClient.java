@@ -5,10 +5,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;
 
-import io.lippia.reportServer.api.model.InitializeDTO;
-import io.lippia.reportServer.api.model.InitializeResponseDTO;
-import io.lippia.reportServer.api.model.LogDTO;
-import io.lippia.reportServer.api.model.TestDTO;
+import io.lippia.reportserver.api.model.InitializeDTO;
+import io.lippia.reportserver.api.model.InitializeResponseDTO;
+import io.lippia.reportserver.api.model.LogDTO;
+import io.lippia.reportserver.api.model.TestDTO;
 
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -115,7 +115,7 @@ public class LippiaReportServerApiClient {
 		String url = getAPIUrl() + "/finalize";
 
 		TestDTO test = new TestDTO();
-		test.setExcecutionIdentifier(report.getExcecutionIdentifier());
+		test.setExecutionIdentifier(report.getExecutionIdentifier());
 		HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
 
 		getRestInstance().postForObject(url, request, String.class);

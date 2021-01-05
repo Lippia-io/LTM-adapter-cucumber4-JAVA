@@ -35,14 +35,14 @@ import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleString;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
-import io.lippia.reportServer.api.model.InitializeResponseDTO;
-import io.lippia.reportServer.api.model.LogDTO;
-import io.lippia.reportServer.api.model.StatusDTO;
-import io.lippia.reportServer.api.model.TestDTO;
 import io.lippia.reporter.api.client.LippiaReportServerApiClient;
 import io.lippia.reporter.service.Markup;
 import io.lippia.reporter.service.MarkupHelper;
 import io.lippia.reporter.service.PropertiesService;
+import io.lippia.reportserver.api.model.InitializeResponseDTO;
+import io.lippia.reportserver.api.model.LogDTO;
+import io.lippia.reportserver.api.model.StatusDTO;
+import io.lippia.reportserver.api.model.TestDTO;
 
 /**
  * A port of Cucumber-JVM (MIT licensed) HtmlFormatter for Extent Framework 
@@ -174,7 +174,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             t.setType("feature");
             t.setName(feature.getName());
             t.setDescription(feature.getDescription());
-            t.setExcecutionIdentifier(report.getExcecutionIdentifier());
+            t.setExecutionIdentifier(report.getExecutionIdentifier());
             
         // author assignation by systemProperty
             String author = (String)PropertiesService.getProperty("extent.author");
@@ -244,7 +244,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             t.setName(scenarioOutline.getName());
             t.setDescription(scenarioOutline.getDescription());
             t.setTestParentIdentifier(feature.getTestIdentifier());
-            t.setExcecutionIdentifier(report.getExcecutionIdentifier());
+            t.setExecutionIdentifier(report.getExecutionIdentifier());
 
             
             List<String> featureTags = feature.getTags();
@@ -321,7 +321,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             t.setName(testCase.getName());
             t.setDescription(scenarioDefinition.getDescription());
             t.setTestParentIdentifier(parent.getTestIdentifier());
-            t.setExcecutionIdentifier(report.getExcecutionIdentifier());
+            t.setExecutionIdentifier(report.getExecutionIdentifier());
 
             if (!testCase.getTags().isEmpty()) {
                 testCase.getTags()
