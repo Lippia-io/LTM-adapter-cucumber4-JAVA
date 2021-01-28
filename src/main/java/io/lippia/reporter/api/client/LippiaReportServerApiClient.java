@@ -43,7 +43,7 @@ public class LippiaReportServerApiClient {
 	
 	private static String apiUrl;
 
-	private LippiaReportServerApiClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+	private static void initializeRestTemplate(){
 		apiUrl = getAPIUrl();
 		
 		if(apiUrl.startsWith("https://")) {	
@@ -53,12 +53,17 @@ public class LippiaReportServerApiClient {
 		        }
 		    };
 		    
-		    SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
-		    SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
-		    CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
-		    HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		    requestFactory.setHttpClient(httpClient);
-		    restTemplate = new RestTemplate(requestFactory);
+		    SSLContext sslContext;
+			try {
+				sslContext = org.apache.http.ssl.SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
+				SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
+				CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
+				HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+				requestFactory.setHttpClient(httpClient);
+				restTemplate = new RestTemplate(requestFactory);
+			} catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
+				e.printStackTrace();
+			}
 		} else {
 			restTemplate = new RestTemplate();
 		}
@@ -78,7 +83,9 @@ public class LippiaReportServerApiClient {
 		return getRestInstance().postForObject(url, request, InitializeResponseDTO.class);
 	}
 
-	private static RestTemplate getRestInstance() {
+	private static RestTemplate getRestInstance(){
+		if(restTemplate==null)
+			initializeRestTemplate();
 		return restTemplate;
 	}
 
