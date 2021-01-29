@@ -1,6 +1,10 @@
 # Changelog 
 All notable changes to this project will be documented in this file.
 
+## 1.7.1 (28/01/2020)
+- bugFix retTemplate null
+- upgrading branching model and pipeline for snapshots and releases
+
 ## 1.5.1 (21/10/2020)
 - Code Clean and bug solving.
 
