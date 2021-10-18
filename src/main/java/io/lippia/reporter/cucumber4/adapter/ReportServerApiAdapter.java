@@ -192,7 +192,10 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             t.setTags(tagList);
             
 			TestDTO testCreated = LippiaReportServerApiClient.create(t);
-			
+
+			if (testCreated.getTags() == null)
+			    testCreated.setTags(new ArrayList<>());
+
 			featureTestThreadLocal.set(testCreated);
             featureMap.put(testCreated.getName(), testCreated);
 
@@ -248,7 +251,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
 
             
             List<String> featureTags = feature.getTags();
-            
+
             scenarioOutline.getTags()
             	.stream()
             	.map(Tag::getName)
