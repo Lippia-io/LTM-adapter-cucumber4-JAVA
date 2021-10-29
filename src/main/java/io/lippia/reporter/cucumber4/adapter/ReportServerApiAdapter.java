@@ -208,7 +208,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     private synchronized void handleScenarioOutline(TestCase testCase) {
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
         if (TestSourcesModel.isScenarioOutlineScenario(astNode)) {
             ScenarioOutline scenarioOutline = (ScenarioOutline)TestSourcesModel.getScenarioDefinition(astNode);
             if (currentScenarioOutline.get() == null || !currentScenarioOutline.get().getName().equals(scenarioOutline.getName())) {
@@ -216,10 +216,10 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
                 createScenarioOutline(scenarioOutline);
                 currentScenarioOutline.set(scenarioOutline);
                 addOutlineStepsToReport(scenarioOutline);
-	            
+	            /*
                 Examples examples = (Examples)astNode.parent.node;
                 createExamples(examples);
-
+                */
                 TestDTO newScenarioOutline = LippiaReportServerApiClient.create(scenarioOutlineThreadLocal.get());
                 scenarioOutlineThreadLocal.set(newScenarioOutline);
             }
@@ -277,20 +277,25 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
         return docStringMap;
     }
 
-    private void createExamples(Examples examples) {
+    private int count = 0;
+    private String previousTag = "";
+    private String createExamples(Examples examples) {
         List<TableRow> rows = new ArrayList<>();
         rows.add(examples.getTableHeader());
-        rows.addAll(examples.getTableBody());
+        String currentlyTag = examples.getTags().get(0).getName();
+        if (currentlyTag.equals(previousTag)) count++;
+        else count = 0;
+        rows.add(examples.getTableBody().get(count));
+        previousTag = currentlyTag;
         String[][] data = getTable(rows);
         String markup = MarkupHelper.createTable(data).getMarkup();
         if (examples.getName() != null && !examples.getName().isEmpty()) {
             markup = examples.getName() + markup;
         }
-        
-        String description = scenarioOutlineThreadLocal.get().getDescription();
-        description = description == null ? "" : description;
-        
-        scenarioOutlineThreadLocal.get().setDescription(description + markup);
+
+        return markup;
+        /*(scenarioThreadLocal.get().getDescription() == null) ? "" : scenarioThreadLocal.get().getDescription();
+        description = description == null ? "" : description; */
     }
     
     private String[][] getTable(List<TableRow> rows) {
@@ -311,15 +316,18 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     synchronized void createTestCase(TestCase testCase) {
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
         if (astNode != null) {
             ScenarioDefinition scenarioDefinition = TestSourcesModel.getScenarioDefinition(astNode);
             TestDTO parent = scenarioOutlineThreadLocal.get() != null ? scenarioOutlineThreadLocal.get() : featureTestThreadLocal.get();
-            
+
         	TestDTO t = new TestDTO();
             t.setType("scenario");
             t.setName(testCase.getName());
-            t.setDescription(scenarioDefinition.getDescription());
+            if (astNode.parent.node instanceof Examples)
+                t.setDescription(this.createExamples((Examples) astNode.parent.node));
+            else
+                t.setDescription(scenarioDefinition.getDescription());
             t.setTestParentIdentifier(parent.getTestIdentifier());
             t.setExecutionIdentifier(report.getExecutionIdentifier());
 
@@ -329,9 +337,9 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     	    		.map(PickleTag::getName)
     	    		.forEach(t::assignCategory);
             }
-            
-			TestDTO testCreated = LippiaReportServerApiClient.create(t);
-			scenarioThreadLocal.set(testCreated);          
+
+            TestDTO testCreated = LippiaReportServerApiClient.create(t);
+            scenarioThreadLocal.set(testCreated);
         }
         
     }
@@ -367,7 +375,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     private LogDTO extractStepLog(PickleStepTestStep testStep) {
     	LogDTO stepLog = null;
     	String stepName = testStep.getStepText();
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testStep.getStepLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testStep.getStepLine());
 		if (astNode != null) {
             Step step = (Step) astNode.node;
             String name = stepName == null || stepName.isEmpty() 
