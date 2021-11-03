@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
@@ -216,10 +217,6 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
                 createScenarioOutline(scenarioOutline);
                 currentScenarioOutline.set(scenarioOutline);
                 addOutlineStepsToReport(scenarioOutline);
-	            /*
-                Examples examples = (Examples)astNode.parent.node;
-                createExamples(examples);
-                */
                 TestDTO newScenarioOutline = LippiaReportServerApiClient.create(scenarioOutlineThreadLocal.get());
                 scenarioOutlineThreadLocal.set(newScenarioOutline);
             }
@@ -277,25 +274,17 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
         return docStringMap;
     }
 
-    private int count = 0;
-    private String previousTag = "";
-    private String createExamples(Examples examples) {
-        List<TableRow> rows = new ArrayList<>();
-        rows.add(examples.getTableHeader());
-        String currentlyTag = examples.getTags().get(0).getName();
-        if (currentlyTag.equals(previousTag)) count++;
-        else count = 0;
-        rows.add(examples.getTableBody().get(count));
-        previousTag = currentlyTag;
-        String[][] data = getTable(rows);
+    private String createExamples(AstNode astNode) {
+        HashMap<Integer, ArrayList<TableRow>> tables = getEventRows(astNode);
+        Examples examples = (Examples)astNode.parent.node;
+        ArrayList<TableRow> tableRow = tables.get(astNode.node.getLocation().getLine());
+        String[][] data = getTable(tableRow);
         String markup = MarkupHelper.createTable(data).getMarkup();
         if (examples.getName() != null && !examples.getName().isEmpty()) {
             markup = examples.getName() + markup;
         }
 
         return markup;
-        /*(scenarioThreadLocal.get().getDescription() == null) ? "" : scenarioThreadLocal.get().getDescription();
-        description = description == null ? "" : description; */
     }
     
     private String[][] getTable(List<TableRow> rows) {
@@ -325,7 +314,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             t.setType("scenario");
             t.setName(testCase.getName());
             if (astNode.parent.node instanceof Examples)
-                t.setDescription(this.createExamples((Examples) astNode.parent.node));
+                t.setDescription(this.createExamples(astNode));
             else
                 t.setDescription(scenarioDefinition.getDescription());
             t.setTestParentIdentifier(parent.getTestIdentifier());
@@ -342,6 +331,25 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
             scenarioThreadLocal.set(testCreated);
         }
         
+    }
+
+    private HashMap<Integer, ArrayList<TableRow>> getEventRows(AstNode astNode) {
+        HashMap<Integer, ArrayList<TableRow>> tables = new HashMap<>();
+        ArrayList<TableRow> tableRows = new ArrayList<>();
+        List<TableCell> tableCell = ((Examples)astNode.parent.node).getTableBody()
+                .stream()
+                .flatMap(var0 -> var0.getCells().stream())
+                .filter(var1 -> var1.getLocation().getLine() == astNode.node.getLocation().getLine()) // n vs event pickle
+                .collect(Collectors.toList());
+
+        TableRow tableHeader = new TableRow(astNode.node.getLocation(), ((Examples)astNode.parent.node).getTableHeader().getCells());
+        TableRow tableBody = new TableRow(astNode.node.getLocation(), tableCell);
+        tableRows.add(tableHeader);
+        tableRows.add(tableBody);
+
+        tables.put(astNode.node.getLocation().getLine(), tableRows);
+
+        return tables;
     }
 
     synchronized LogDTO createTestStep(PickleStepTestStep testStep) {
