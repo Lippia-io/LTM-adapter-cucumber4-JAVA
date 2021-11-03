@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
@@ -211,7 +212,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     private synchronized void handleScenarioOutline(TestCase testCase) {
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
         if (TestSourcesModel.isScenarioOutlineScenario(astNode)) {
             ScenarioOutline scenarioOutline = (ScenarioOutline)TestSourcesModel.getScenarioDefinition(astNode);
             if (currentScenarioOutline.get() == null || !currentScenarioOutline.get().getName().equals(scenarioOutline.getName())) {
@@ -219,10 +220,6 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
                 createScenarioOutline(scenarioOutline);
                 currentScenarioOutline.set(scenarioOutline);
                 addOutlineStepsToReport(scenarioOutline);
-	            
-                Examples examples = (Examples)astNode.parent.node;
-                createExamples(examples);
-
                 TestDTO newScenarioOutline = LippiaReportServerApiClient.create(scenarioOutlineThreadLocal.get());
                 scenarioOutlineThreadLocal.set(newScenarioOutline);
             }
@@ -280,20 +277,17 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
         return docStringMap;
     }
 
-    private void createExamples(Examples examples) {
-        List<TableRow> rows = new ArrayList<>();
-        rows.add(examples.getTableHeader());
-        rows.addAll(examples.getTableBody());
-        String[][] data = getTable(rows);
+    private String createExamples(AstNode astNode) {
+        HashMap<Integer, ArrayList<TableRow>> tables = getEventRows(astNode);
+        Examples examples = (Examples)astNode.parent.node;
+        ArrayList<TableRow> tableRow = tables.get(astNode.node.getLocation().getLine());
+        String[][] data = getTable(tableRow);
         String markup = MarkupHelper.createTable(data).getMarkup();
         if (examples.getName() != null && !examples.getName().isEmpty()) {
             markup = examples.getName() + markup;
         }
-        
-        String description = scenarioOutlineThreadLocal.get().getDescription();
-        description = description == null ? "" : description;
-        
-        scenarioOutlineThreadLocal.get().setDescription(description + markup);
+
+        return markup;
     }
     
     private String[][] getTable(List<TableRow> rows) {
@@ -314,15 +308,18 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     }
 
     synchronized void createTestCase(TestCase testCase) {
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testCase.getLine());
         if (astNode != null) {
             ScenarioDefinition scenarioDefinition = TestSourcesModel.getScenarioDefinition(astNode);
             TestDTO parent = scenarioOutlineThreadLocal.get() != null ? scenarioOutlineThreadLocal.get() : featureTestThreadLocal.get();
-            
+
         	TestDTO t = new TestDTO();
             t.setType("scenario");
             t.setName(testCase.getName());
-            t.setDescription(scenarioDefinition.getDescription());
+            if (astNode.parent.node instanceof Examples)
+                t.setDescription(this.createExamples(astNode));
+            else
+                t.setDescription(scenarioDefinition.getDescription());
             t.setTestParentIdentifier(parent.getTestIdentifier());
             t.setExecutionIdentifier(report.getExecutionIdentifier());
 
@@ -332,11 +329,30 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     	    		.map(PickleTag::getName)
     	    		.forEach(t::assignCategory);
             }
-            
-			TestDTO testCreated = LippiaReportServerApiClient.create(t);
-			scenarioThreadLocal.set(testCreated);          
+
+            TestDTO testCreated = LippiaReportServerApiClient.create(t);
+            scenarioThreadLocal.set(testCreated);
         }
         
+    }
+
+    private HashMap<Integer, ArrayList<TableRow>> getEventRows(AstNode astNode) {
+        HashMap<Integer, ArrayList<TableRow>> tables = new HashMap<>();
+        ArrayList<TableRow> tableRows = new ArrayList<>();
+        List<TableCell> tableCell = ((Examples)astNode.parent.node).getTableBody()
+                .stream()
+                .flatMap(var0 -> var0.getCells().stream())
+                .filter(var1 -> var1.getLocation().getLine() == astNode.node.getLocation().getLine()) // n vs event pickle
+                .collect(Collectors.toList());
+
+        TableRow tableHeader = new TableRow(astNode.node.getLocation(), ((Examples)astNode.parent.node).getTableHeader().getCells());
+        TableRow tableBody = new TableRow(astNode.node.getLocation(), tableCell);
+        tableRows.add(tableHeader);
+        tableRows.add(tableBody);
+
+        tables.put(astNode.node.getLocation().getLine(), tableRows);
+
+        return tables;
     }
 
     synchronized LogDTO createTestStep(PickleStepTestStep testStep) {
@@ -370,7 +386,7 @@ public abstract class ReportServerApiAdapter implements ConcurrentEventListener,
     private LogDTO extractStepLog(PickleStepTestStep testStep) {
     	LogDTO stepLog = null;
     	String stepName = testStep.getStepText();
-        TestSourcesModel.AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testStep.getStepLine());
+        AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), testStep.getStepLine());
 		if (astNode != null) {
             Step step = (Step) astNode.node;
             String name = stepName == null || stepName.isEmpty() 
