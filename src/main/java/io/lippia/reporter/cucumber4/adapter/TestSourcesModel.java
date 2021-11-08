@@ -51,19 +51,19 @@ public final class TestSourcesModel {
 		if(astNode == null) {
 			return null;
 		}
-		
+
 		if(astNode.node instanceof ScenarioDefinition) {
 			return (ScenarioDefinition) astNode.node;
 		}
-		
+
 		if(astNode.parent == null) {
 			return null;
 		}
-		
+
 		if(astNode.parent.parent == null) {
 			return null;
 		}
-		
+
 		return (ScenarioDefinition) astNode.parent.parent.node;
 	}
 
@@ -203,19 +203,25 @@ public final class TestSourcesModel {
 	}
 
 	private void processScenarioOutlineExamples(Map<Integer, AstNode> nodeMap, ScenarioOutline scenarioOutline, AstNode childNode) {
-		for (Examples examples : scenarioOutline.getExamples()) {
-			AstNode examplesNode = new AstNode(examples, childNode);
-			TableRow headerRow = examples.getTableHeader();
-			AstNode headerNode = new AstNode(headerRow, examplesNode);
-			nodeMap.put(headerRow.getLocation().getLine(), headerNode);
-			for (int i = 0; i < examples.getTableBody().size(); ++i) {
-				TableRow examplesRow = examples.getTableBody().get(i);
-				Node rowNode = new ExamplesRowWrapperNode(examplesRow, i);
-				AstNode expandedScenarioNode = new AstNode(rowNode, examplesNode);
-				nodeMap.put(examplesRow.getLocation().getLine(), expandedScenarioNode);
+		try {
+			for (Examples examples : scenarioOutline.getExamples()) {
+					AstNode examplesNode = new AstNode(examples, childNode);
+					TableRow headerRow = examples.getTableHeader();
+					AstNode headerNode = new AstNode(headerRow, examplesNode);
+					nodeMap.put(headerRow.getLocation().getLine(), headerNode);
+					for (int i = 0; i < examples.getTableBody().size(); ++i) {
+						TableRow examplesRow = examples.getTableBody().get(i);
+						Node rowNode = new ExamplesRowWrapperNode(examplesRow, i);
+						AstNode expandedScenarioNode = new AstNode(rowNode, examplesNode);
+						nodeMap.put(examplesRow.getLocation().getLine(), expandedScenarioNode);
+					}
 			}
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
 	}
+
+}
 
 	class ExamplesRowWrapperNode extends Node {
 		final int bodyRowIndex;
@@ -235,4 +241,4 @@ public final class TestSourcesModel {
 			this.parent = parent;
 		}
 	}
-}
+
