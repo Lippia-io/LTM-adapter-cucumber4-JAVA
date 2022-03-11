@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>io.lippia.reportServer</groupId>
 			<artifactId>api-model</artifactId>
-			<version>1.0</version>
+			<version>1.1</version>
 		</dependency>
 		
 		<dependency>
