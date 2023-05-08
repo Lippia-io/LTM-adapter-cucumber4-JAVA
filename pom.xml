@@ -4,8 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>io.lippia.report</groupId>
-	<artifactId>cucumber4-adapter</artifactId>
-	<version>1.7.3-SNAPSHOT</version>
+	<artifactId>ltm-cucumber4-adapter</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
 	
 	<url>http://lippia.io</url>
     
@@ -31,54 +31,52 @@
 	</properties>
 
 	<dependencies>
-
+		<dependency>
+			<groupId>io.lippia</groupId>
+			<artifactId>core</artifactId>
+			<version>3.3.0.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-java</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-java8</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-testng</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>io.cucumber</groupId>
 			<artifactId>cucumber-java</artifactId>
 			<version>${cucumber.version}</version>
 		</dependency>
-		
 		<dependency>
 			<groupId>io.cucumber</groupId>
 			<artifactId>cucumber-junit</artifactId>
 			<version>${cucumber.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
-		<dependency>
-			<groupId>io.lippia.reportserver</groupId>
-			<artifactId>api-model</artifactId>
-			<version>1.0</version>
-		</dependency>
-		
-		<dependency>
-		    <groupId>org.springframework</groupId>
-		    <artifactId>spring-web</artifactId>
-		    <version>5.2.7.RELEASE</version>
-		</dependency>
-		
-		<dependency>
-		    <groupId>commons-io</groupId>
-		    <artifactId>commons-io</artifactId>
-		    <version>2.6</version>
-		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
-		<dependency>
-		    <groupId>org.apache.httpcomponents</groupId>
-		    <artifactId>httpclient</artifactId>
-		    <version>4.5.13</version>
-		</dependency>
-		
-		
 	</dependencies>
 
 	<build>
 	 	<resources>
-            <resource>
-                <filtering>true</filtering>
-                <directory>src/test/resources</directory>
-            </resource>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/test/resources</directory>
+			</resource>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
         </resources>
 		<plugins>
 			<plugin>

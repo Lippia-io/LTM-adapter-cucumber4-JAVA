@@ -1,0 +1,13 @@
+{
+  "method": "POST",
+  "url": "{{url}}",
+  "endpoint": "runs",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {{token}}"
+  },
+  "body": {
+    "runName": "{{runName}}",
+    "projectCode": "{{projectCode}}"
+  }
+}
