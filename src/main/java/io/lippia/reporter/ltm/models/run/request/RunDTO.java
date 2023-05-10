@@ -1,7 +1,12 @@
-package io.lippia.reporter.ltm.models;
+package io.lippia.reporter.ltm.models.run.request;
 
 public final class RunDTO {
     public RunDTO() {
+    }
+
+    public RunDTO(String runName, String projectCode) {
+        this.runName = runName;
+        this.projectCode = projectCode;
     }
 
     public void setRunName(String runName) {

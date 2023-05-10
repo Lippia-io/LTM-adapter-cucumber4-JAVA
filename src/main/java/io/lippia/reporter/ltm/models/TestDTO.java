@@ -7,6 +7,16 @@ public final class TestDTO {
     public TestDTO() {
     }
 
+    public TestDTO(String title, String runId, String status, String feature, String type, List<String> tags, List<StepDTO> steps) {
+        this.title = title;
+        this.runId = runId;
+        this.status = status;
+        this.feature = feature;
+        this.type = type;
+        this.tags = tags;
+        this.steps = steps;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }

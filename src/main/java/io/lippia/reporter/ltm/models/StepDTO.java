@@ -4,9 +4,9 @@ public final class StepDTO {
     public StepDTO() {
     }
 
-    public StepDTO(String title, String description, String base64Image, String status) {
+    public StepDTO(String title, String stackTrace, String base64Image, String status) {
         this.title = title;
-        this.description = description;
+        this.description = stackTrace;
         this.base64Image = base64Image;
         this.status = status;
     }
@@ -27,8 +27,8 @@ public final class StepDTO {
         return description;
     }
 
-    public void setBase64Image(String baase64Image) {
-        this.base64Image = baase64Image;
+    public void setBase64Image(String base64Image) {
+        this.base64Image = base64Image;
     }
 
     public String getBase64Image() {
