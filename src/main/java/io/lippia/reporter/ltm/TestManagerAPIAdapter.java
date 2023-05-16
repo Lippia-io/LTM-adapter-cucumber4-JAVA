@@ -18,10 +18,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("[Technical Debt] -> {TestManagerAPIAdapter::createFeature}")
 public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
-    private TestSourcesModel testSources = new TestSourcesModel();
-    private ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
-    private static ThreadLocal<TestDTO> featureTestThreadLocal = new InheritableThreadLocal<>();
+    private final TestSourcesModel testSources = new TestSourcesModel();
+    private final ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
+    private static final ThreadLocal<TestDTO> featureTestThreadLocal = new InheritableThreadLocal<>();
     static Map<String, TestDTO> featureMap = new ConcurrentHashMap<>();
 
     private static final RunDTO runResponseDTO;
@@ -117,12 +118,14 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
 
         if (event.testStep instanceof PickleStepTestStep) {
             String base64Image = null;
+            String stackTrace = null;
             String status = getStatusAsString(event);
             if (status.equalsIgnoreCase("FAIL")) {
                 base64Image = getBase64Image();
+                stackTrace = event.result.getErrorMessage();
             }
 
-            steps.get().add(new StepDTO(getStepText(event), null, base64Image, status));
+            steps.get().add(new StepDTO(getStepText(event), stackTrace, base64Image, status));
         }
 
     }

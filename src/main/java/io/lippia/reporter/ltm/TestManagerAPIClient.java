@@ -2,6 +2,7 @@ package io.lippia.reporter.ltm;
 
 import io.lippia.reporter.ltm.models.*;
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
+
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -16,8 +17,6 @@ import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 import static io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_JSON;
 import static io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED;
@@ -29,58 +28,6 @@ final class TestManagerAPIClient {
     private static final String TEST_MANAGER_RUN_NAME = System.getProperty("TEST_MANAGER_RUN_NAME");
     private static final String TEST_MANAGER_PROJECT_CODE = System.getProperty("TEST_MANAGER_PROJECT_CODE");
 
-
-
-    /* public static TestResDTO createTest(TestDTO testDTO) {
-        String res = APIController.sendRequest("test.json", testDTO);
-
-        try {
-            return MapperUtils.getDefaultMapper().readValue(res, TestResDTO.class);
-        } catch (IOException e) {
-            throw new RuntimeException("deserialization error, root trouble: " + e.getMessage());
-        }
-    } */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static RestTemplate restTemplate;
 
     private static String apiUrl;
@@ -89,11 +36,7 @@ final class TestManagerAPIClient {
         apiUrl = getAPIUrl();
 
         if(apiUrl.startsWith("https://")) {
-            TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
-                public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                    return true;
-                }
-            };
+            TrustStrategy acceptingTrustStrategy = (x509Certificates, s) -> true;
 
             SSLContext sslContext;
             try {
@@ -168,8 +111,4 @@ final class TestManagerAPIClient {
         HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
         getRestInstance().postForObject(url, request, TestResDTO.class);
     }
-
-
-
-
 }
