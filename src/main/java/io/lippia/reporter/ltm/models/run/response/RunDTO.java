@@ -4,13 +4,13 @@ public class RunDTO {
     public RunDTO() {
     }
 
-    public void setData(DataDTO data) {
-        this.data = data;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public DataDTO getData() {
-        return data;
+    public String getId() {
+        return id;
     }
 
-    private DataDTO data;
+    private String id;
 }
