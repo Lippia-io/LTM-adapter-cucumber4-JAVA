@@ -1,7 +1,5 @@
 package io.lippia.reporter.ltm.models.run.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class DataDTO {
     public DataDTO() {
     }
@@ -14,6 +12,5 @@ public class DataDTO {
         return id;
     }
 
-    @JsonProperty("id")
     private String id;
 }

@@ -18,8 +18,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 
-import static io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_JSON;
-import static io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 final class TestManagerAPIClient {
@@ -62,7 +60,7 @@ final class TestManagerAPIClient {
 
     private static HttpHeaders getApiHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        headers.set(CONTENT_TYPE, APPLICATION_JSON);
+        headers.set(CONTENT_TYPE, "application/json");
         headers.set("Authorization", "Bearer " + getAuthToken());
         return headers;
     }
@@ -70,7 +68,7 @@ final class TestManagerAPIClient {
     private static String getAuthToken() {
         String url = "https://authdev.lippia.io/realms/mvp.lippia.io/protocol/openid-connect/token";
         HttpHeaders headers = new HttpHeaders();
-        headers.set(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+        headers.set(CONTENT_TYPE, "application/x-www-form-urlencoded");
         HttpEntity<String> request = new HttpEntity<>("client_id=admin-cli&grant_type=password&username=admin&password=admin", headers);
         AuthResDTO authRes = getRestInstance().postForObject(url, request, AuthResDTO.class);
         return authRes.getAccessToken();
