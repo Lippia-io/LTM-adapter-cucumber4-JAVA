@@ -14,16 +14,13 @@ import io.lippia.reporter.ltm.models.TestDTO;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("[Technical Debt] -> {TestManagerAPIAdapter::createFeature}")
 public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     private final TestSourcesModel testSources = new TestSourcesModel();
     private final ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
-    private static final ThreadLocal<TestDTO> featureTestThreadLocal = new InheritableThreadLocal<>();
-    static Map<String, TestDTO> featureMap = new ConcurrentHashMap<>();
+    private static final ThreadLocal<List<StepDTO>> steps = new ThreadLocal<>();
 
     private static final RunDTO runResponseDTO;
 
@@ -56,6 +53,12 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
         //createTestCase(event);
     }
 
+    private void cleanSteps() {
+        if (steps.get() != null) {
+            steps.remove();
+        }
+    }
+
     private synchronized void handleStartOfFeature(TestCaseStarted testCase) {
         String uri = currentFeatureFile.get();
         if(uri == null || !uri.equals(testCase.getTestCase().getUri())) {
@@ -65,26 +68,14 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
 
     private synchronized void handleEndOfFeature(TestCaseFinished testCase) {
         createFeature(testCase);
+        cleanSteps();
     }
 
     protected void createFeature(TestCaseFinished testCase) {
         Feature feature = testSources.getFeature(testCase.getTestCase().getUri());
         if (feature != null) {
-            if (featureMap.containsKey(feature.getName())) {
-                featureTestThreadLocal.set(featureMap.get(feature.getName()));
-                return;
-            }
-
-            if (featureTestThreadLocal.get() != null && featureTestThreadLocal.get().getFeature().equals(feature.getName())) {
-                return;
-            }
-
             TestDTO test = createTestDTO(testCase, feature.getName());
-
-            featureTestThreadLocal.set(test);
-            featureMap.put(test.getFeature(), test);
-
-            TestManagerAPIClient.createTest(featureMap.get(test.getFeature()));
+            TestManagerAPIClient.createTest(test);
         }
     }
 
@@ -109,8 +100,6 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
         return status.toString().toUpperCase().substring(0, status.toString().length() - 2);
     }
 
-    private static final ThreadLocal<List<StepDTO>> steps = new ThreadLocal<>();
-
     protected synchronized void addFinishedStep(TestStepFinished event) {
         if (steps.get() == null) {
             steps.set(new LinkedList<>());
@@ -122,7 +111,7 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
             String status = getStatusAsString(event);
             if (status.equalsIgnoreCase("FAIL")) {
                 base64Image = getBase64Image();
-                stackTrace = event.result.getErrorMessage();
+                stackTrace = truncate(event.result.getErrorMessage(), 200);
             }
 
             steps.get().add(new StepDTO(getStepText(event), stackTrace, base64Image, status));
@@ -134,13 +123,20 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
         String stepText = null;
         PickleStepTestStep pickle = ((PickleStepTestStep) event.testStep);
         AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), pickle.getStepLine());
-
         if (astNode != null) {
             Step step = (Step) astNode.node;
             stepText = step.getKeyword() + pickle.getStepText();
         }
 
         return stepText;
+    }
+
+    public static synchronized String truncate(String str, int length) {
+        if (str.length() <= length) {
+            return str.substring(0, length);
+        }
+
+        return str;
     }
 
     public abstract String getBase64Image();
