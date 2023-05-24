@@ -9,8 +9,8 @@ import gherkin.ast.Step;
 import gherkin.pickles.PickleTag;
 
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
-import io.lippia.reporter.ltm.models.StepDTO;
-import io.lippia.reporter.ltm.models.TestDTO;
+import io.lippia.reporter.ltm.models.run.request.StepDTO;
+import io.lippia.reporter.ltm.models.run.request.TestDTO;
 
 import java.util.LinkedList;
 import java.util.List;
