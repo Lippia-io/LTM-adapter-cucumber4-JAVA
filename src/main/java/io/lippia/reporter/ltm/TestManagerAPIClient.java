@@ -1,6 +1,6 @@
 package io.lippia.reporter.ltm;
 
-import io.lippia.reporter.ltm.models.*;
+import io.lippia.reporter.ltm.models.run.request.TestDTO;
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
 
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -21,6 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 final class TestManagerAPIClient {
+    private static final String TEST_MANAGER_USER_KEY = System.getProperty("TEST_MANAGER_USERNAME");
+    private static final String TEST_MANAGER_PASS_KEY = System.getProperty("TEST_MANAGER_PASSWORD");
     private static final String TEST_MANAGER_API_HOST_KEY = System.getProperty("TEST_MANAGER_API_HOST");
     private static final String TEST_MANAGER_API_PORT_KEY = System.getProperty("TEST_MANAGER_API_PORT");
     private static final String TEST_MANAGER_RUN_NAME = System.getProperty("TEST_MANAGER_RUN_NAME");
@@ -59,19 +61,19 @@ final class TestManagerAPIClient {
     }
 
     private static HttpHeaders getApiHeaders() {
+        if (TEST_MANAGER_USER_KEY == null) {
+            throw new IllegalArgumentException("TEST_MANAGER_USERNAME must not be null");
+        }
+
+        if (TEST_MANAGER_PASS_KEY == null) {
+            throw new IllegalArgumentException("TEST_MANAGER_PASSWORD must not be null");
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.set(CONTENT_TYPE, "application/json");
-        headers.set("Authorization", "Bearer " + getAuthToken());
+        headers.set("username", TEST_MANAGER_USER_KEY);
+        headers.set("password", TEST_MANAGER_PASS_KEY);
         return headers;
-    }
-
-    private static String getAuthToken() {
-        String url = "https://authdev.lippia.io/realms/mvp.lippia.io/protocol/openid-connect/token";
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(CONTENT_TYPE, "application/x-www-form-urlencoded");
-        HttpEntity<String> request = new HttpEntity<>("client_id=admin-cli&grant_type=password&username=admin&password=admin", headers);
-        AuthResDTO authRes = getRestInstance().postForObject(url, request, AuthResDTO.class);
-        return authRes.getAccessToken();
     }
 
     private static String getAPIUrl() {
@@ -97,7 +99,8 @@ final class TestManagerAPIClient {
             throw new IllegalArgumentException("TEST_MANAGER_RUN_NAME cannot be null");
         }
 
-        io.lippia.reporter.ltm.models.run.request.RunDTO run = new io.lippia.reporter.ltm.models.run.request.RunDTO(TEST_MANAGER_RUN_NAME, TEST_MANAGER_PROJECT_CODE);
+        io.lippia.reporter.ltm.models.run.request.RunDTO run = new io.lippia.reporter.ltm.models.run.request.RunDTO(
+                TEST_MANAGER_RUN_NAME, TEST_MANAGER_PROJECT_CODE);
 
         String url = getAPIUrl() + "/runs/runs";
         HttpEntity<io.lippia.reporter.ltm.models.run.request.RunDTO> request = new HttpEntity<>(run, getApiHeaders());
@@ -107,6 +110,6 @@ final class TestManagerAPIClient {
     public static void createTest(TestDTO test) {
         String url = getAPIUrl() + "/runs/tests";
         HttpEntity<TestDTO> request = new HttpEntity<>(test, getApiHeaders());
-        getRestInstance().postForObject(url, request, TestResDTO.class);
+        getRestInstance().postForObject(url, request, Object.class);
     }
 }
