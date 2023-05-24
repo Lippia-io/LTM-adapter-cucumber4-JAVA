@@ -1,4 +1,4 @@
-package io.lippia.reporter.ltm.models;
+package io.lippia.reporter.ltm.models.run.request;
 
 public final class StepDTO {
     public StepDTO() {

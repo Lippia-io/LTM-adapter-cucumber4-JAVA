@@ -1,4 +1,4 @@
-package io.lippia.reporter.ltm.models;
+package io.lippia.reporter.ltm.models.run.request;
 
 import java.util.LinkedList;
 import java.util.List;
