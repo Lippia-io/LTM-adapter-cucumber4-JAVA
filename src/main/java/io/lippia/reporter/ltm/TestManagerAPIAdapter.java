@@ -4,13 +4,18 @@ import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
 import cucumber.api.event.*;
 
+import gherkin.ast.DataTable;
+import gherkin.ast.DocString;
 import gherkin.ast.Feature;
+import gherkin.ast.Node;
 import gherkin.ast.Step;
 import gherkin.pickles.PickleTag;
 
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
 import io.lippia.reporter.ltm.models.run.request.StepDTO;
 import io.lippia.reporter.ltm.models.run.request.TestDTO;
+import io.lippia.reporter.ltm.screenshots.SSConfig;
+import io.lippia.reporter.ltm.screenshots.Strategy;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,8 +28,10 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     private static final ThreadLocal<List<StepDTO>> steps = new ThreadLocal<>();
 
     private static final RunDTO runResponseDTO;
+    private static final SSConfig screenshotConfig;
 
     static {
+        screenshotConfig = SSConfig.load();
         runResponseDTO = TestManagerAPIClient.createRun();
     }
 
@@ -50,7 +57,6 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
 
     private synchronized void handleTestCaseFinished(TestCaseFinished event) {
         this.handleEndOfFeature(event);
-        //createTestCase(event);
     }
 
     private void cleanSteps() {
@@ -109,9 +115,17 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
             String base64Image = null;
             String stackTrace = null;
             String status = getStatusAsString(event);
-            if (status.equalsIgnoreCase("FAIL")) {
+
+            if (screenshotConfig.contains(Strategy.ON_EACH_STEP)) {
                 base64Image = getBase64Image();
-                stackTrace = truncate(event.result.getErrorMessage(), 200);
+            }
+
+            if (status.equalsIgnoreCase("FAIL")) {
+                if (screenshotConfig.contains(Strategy.ON_FAILURE)) {
+                    base64Image = getBase64Image();
+                }
+
+                stackTrace = truncate(event.result.getErrorMessage(), 5);
             }
 
             steps.get().add(new StepDTO(getStepText(event), stackTrace, base64Image, status));
@@ -122,10 +136,25 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     protected synchronized String getStepText(TestStepFinished event) {
         String stepText = null;
         PickleStepTestStep pickle = ((PickleStepTestStep) event.testStep);
+
         AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), pickle.getStepLine());
         if (astNode != null) {
             Step step = (Step) astNode.node;
-            stepText = step.getKeyword() + pickle.getStepText();
+
+            stepText = step.getText();
+            Node argument = step.getArgument();
+
+            if (argument instanceof DataTable) {
+                StringBuilder dtString = new DataTableFormatter
+                        (((DataTable) argument)).generateTabularFormat();
+
+                stepText = dtString.insert(0, stepText + "\n").toString();
+            } else if (argument instanceof DocString) {
+                StringBuilder dsString = new StringBuilder(
+                        ((DocString) argument).getContent());
+
+                stepText = dsString.insert(0, stepText + "\n").toString();
+            }
         }
 
         return stepText;
