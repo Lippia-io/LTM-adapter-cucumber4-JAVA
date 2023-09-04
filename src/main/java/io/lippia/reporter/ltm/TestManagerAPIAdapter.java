@@ -155,6 +155,8 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
 
                 stepText = dsString.insert(0, stepText + "\n").toString();
             }
+
+            stepText = step.getKeyword() + " " + stepText;
         }
 
         return stepText;
