@@ -1,16 +1,16 @@
 package io.lippia.reporter.ltm;
 
-import gherkin.ast.DataTable;
-import gherkin.ast.TableCell;
-import gherkin.ast.TableRow;
+import gherkin.pickles.PickleCell;
+import gherkin.pickles.PickleRow;
+import gherkin.pickles.PickleTable;
 
 import java.util.Iterator;
 import java.util.List;
 
 public class DataTableFormatter {
-    private final List<TableRow> list;
+    private final List<PickleRow> list;
 
-    public DataTableFormatter(final DataTable dtArgument) {
+    public DataTableFormatter(final PickleTable dtArgument) {
         this.list = dtArgument.getRows();
     }
 
@@ -22,21 +22,22 @@ public class DataTableFormatter {
         return result;
     }
 
-    private void appendTable(StringBuilder result, List<TableRow> data) {
+    private void appendTable(StringBuilder result, List<PickleRow> data) {
         if (data.isEmpty()) {
             return;
         }
 
-        Iterator<TableRow> rows = data.iterator();
+        Iterator<PickleRow> rows = data.iterator();
         while (rows.hasNext()) {
-            TableRow row = rows.next();
+            PickleRow row = rows.next();
 
-            Iterator<TableCell> cells = row.getCells().iterator();
+            Iterator<PickleCell> cells = row.getCells().iterator();
             result.append("| ");
             while (cells.hasNext()) {
-                TableCell cell = cells.next();
+                PickleCell cell = cells.next();
                 result.append(padString(cell.getValue(), cell.getValue().length())).append(" | ");
             }
+
             result.append("\n");
         }
     }

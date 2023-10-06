@@ -2,13 +2,21 @@ package io.lippia.reporter.ltm;
 
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
-import cucumber.api.event.*;
 
-import gherkin.ast.DataTable;
-import gherkin.ast.DocString;
+import cucumber.api.event.ConcurrentEventListener;
+import cucumber.api.event.EventPublisher;
+import cucumber.api.event.TestCaseEvent;
+import cucumber.api.event.TestCaseFinished;
+import cucumber.api.event.TestCaseStarted;
+import cucumber.api.event.TestSourceRead;
+import cucumber.api.event.TestStepFinished;
+
 import gherkin.ast.Feature;
-import gherkin.ast.Node;
 import gherkin.ast.Step;
+
+import gherkin.pickles.Argument;
+import gherkin.pickles.PickleString;
+import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
@@ -134,32 +142,31 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     }
 
     protected synchronized String getStepText(TestStepFinished event) {
-        String stepText = null;
+        StringBuilder stepText = new StringBuilder();
         PickleStepTestStep pickle = ((PickleStepTestStep) event.testStep);
 
         AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), pickle.getStepLine());
         if (astNode != null) {
             Step step = (Step) astNode.node;
+            stepText = new StringBuilder(pickle.getStepText());
 
-            stepText = step.getText();
-            Node argument = step.getArgument();
+            for (Argument argument: pickle.getStepArgument()) {
+                StringBuilder dstString = new StringBuilder();
 
-            if (argument instanceof DataTable) {
-                StringBuilder dtString = new DataTableFormatter
-                        (((DataTable) argument)).generateTabularFormat();
+                if (argument instanceof PickleTable) {
+                    dstString.append(new DataTableFormatter
+                        (((PickleTable) argument)).generateTabularFormat());
+                } else if (argument instanceof PickleString) {
+                    dstString.append(((PickleString) argument).getContent());
+                }
 
-                stepText = dtString.insert(0, stepText + "\n").toString();
-            } else if (argument instanceof DocString) {
-                StringBuilder dsString = new StringBuilder(
-                        ((DocString) argument).getContent());
-
-                stepText = dsString.insert(0, stepText + "\n").toString();
+                stepText = new StringBuilder(dstString.insert(0, stepText + "\n").toString());
             }
 
-            stepText = step.getKeyword() + " " + stepText;
+            stepText.insert(0, step.getKeyword());
         }
 
-        return stepText;
+        return stepText.toString();
     }
 
     public static synchronized String truncate(String str, int length) {
