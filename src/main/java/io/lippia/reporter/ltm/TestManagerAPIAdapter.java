@@ -142,13 +142,13 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     }
 
     protected synchronized String getStepText(TestStepFinished event) {
-        StringBuilder stepText = new StringBuilder();
         PickleStepTestStep pickle = ((PickleStepTestStep) event.testStep);
+
+        StringBuilder stepText = new StringBuilder(pickle.getStepText());
 
         AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), pickle.getStepLine());
         if (astNode != null) {
             Step step = (Step) astNode.node;
-            stepText = new StringBuilder(pickle.getStepText());
 
             for (Argument argument: pickle.getStepArgument()) {
                 StringBuilder dstString = new StringBuilder();
