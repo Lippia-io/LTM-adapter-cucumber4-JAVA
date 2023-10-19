@@ -9,14 +9,8 @@
 	
 	<url>http://lippia.io</url>
     
-	<name>extentreports-cucumber4-adapter</name>
-  	<description>Cucumber-JVM 4 adapter for Extent Framework</description>
-    
-    <scm>
-		<connection>scm:git:https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter.git</connection>
-		<developerConnection>scm:git:https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter.git</developerConnection>
-		<url>https://bitbucket.org/crowdarautomation/extentreports-cucumber4-adapter</url>
-	</scm>
+	<name>ltm-cucumber4-adapter</name>
+  	<description>Cucumber-JVM 4 adapter for Cucumber Framework</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
