@@ -38,8 +38,8 @@ public class TestManagerReporter extends TestManagerAPIAdapter {
 ```xml
 <properties>
     ...
-    <test-manager.plugin>--plugin classpath:CucumberReporter:</test-manager.plugin>
-    <cucumber.options>... ${test-manager-plugin}</cucumber.options>
+    <test-manager.plugin>--plugin classpath:TestManagerReporter:</test-manager.plugin>
+    <cucumber.options>... ${test-manager.plugin}</cucumber.options>
     ...
 </properties>
 ```
