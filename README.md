@@ -94,4 +94,4 @@ test-manager.screenshots = <strategy>
 | ON_EACH_STEP     | Will take screenshots in each step that is completed      | Optional  |
 | ON_EACH_SCENARIO | Will take screenshots in each scenario that is completed  | Optional  |
 | ON_FAILURE       | Will take screenshots in each failure step                | Optional  |
-| DISABLED         | Port on which the Test Manager instance will be listening | Optional  |
+| DISABLED         | it won't take screenshots                                 | Optional  |
