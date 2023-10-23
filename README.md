@@ -1,8 +1,9 @@
-# [JVM] Test Manager Cucumber4 Adapter
+# [JVM] Lippia Test Manager Cucumber4 Adapter
 [![Crowdar Official Page](https://img.shields.io/badge/crowdar-official%20page-brightgreen)](https://crowdar.com.ar/)
 [![Lippia Official Page](https://img.shields.io/badge/lippia-official%20page-brightgreen)](https://www.lippia.io/)
 
-#### The test manager adapter allows automators to inject test results at runtime
+ The Lippia Test Manager adapter allows to ingest cucumber test results into a Lippia Test Manager instance. 
+ To have access to a Lippia Test Manager go to [Lippia.io](https://lippia.io/) website.
 
 ## Getting Started
 
@@ -20,7 +21,20 @@
 ```
 
 ### Report Class
-You need to create the class that implements the **TestManagerAPIAdapter** interface
+You need to create the class that implements the **TestManagerAPIAdapter** interface to capture screenshot using a variable *driver*  depending on the type of application you are testing with the automation project
+
+### Web Applications 
+```java
+ import org.openqa.selenium.remote.RemoteWebDriver
+```
+
+### Mobile Applications 
+```java
+import io.appium.java_client.AppiumDriver 
+```
+
+### Class implementation
+
 ```java
 public class TestManagerReporter extends TestManagerAPIAdapter {
     public TestManagerReporter(String arg0) {
@@ -29,7 +43,7 @@ public class TestManagerReporter extends TestManagerAPIAdapter {
 
     @Override
     public String getBase64Image() {
-        return ((TakesScreenshot) DriverManager.getDriverInstance()).getScreenshotAs(OutputType.BASE64);
+        return ((TakesScreenshot) driver.getScreenshotAs(OutputType.BASE64);
     }
 }
 ```
