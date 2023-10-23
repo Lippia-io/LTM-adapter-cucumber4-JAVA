@@ -2,15 +2,28 @@ package io.lippia.reporter.ltm;
 
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
-import cucumber.api.event.*;
+
+import cucumber.api.event.ConcurrentEventListener;
+import cucumber.api.event.EventPublisher;
+import cucumber.api.event.TestCaseEvent;
+import cucumber.api.event.TestCaseFinished;
+import cucumber.api.event.TestCaseStarted;
+import cucumber.api.event.TestSourceRead;
+import cucumber.api.event.TestStepFinished;
 
 import gherkin.ast.Feature;
 import gherkin.ast.Step;
+
+import gherkin.pickles.Argument;
+import gherkin.pickles.PickleString;
+import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 
 import io.lippia.reporter.ltm.models.run.response.RunDTO;
-import io.lippia.reporter.ltm.models.StepDTO;
-import io.lippia.reporter.ltm.models.TestDTO;
+import io.lippia.reporter.ltm.models.run.request.StepDTO;
+import io.lippia.reporter.ltm.models.run.request.TestDTO;
+import io.lippia.reporter.ltm.screenshots.SSConfig;
+import io.lippia.reporter.ltm.screenshots.Strategy;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,8 +36,10 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     private static final ThreadLocal<List<StepDTO>> steps = new ThreadLocal<>();
 
     private static final RunDTO runResponseDTO;
+    private static final SSConfig screenshotConfig;
 
     static {
+        screenshotConfig = SSConfig.load();
         runResponseDTO = TestManagerAPIClient.createRun();
     }
 
@@ -50,7 +65,6 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
 
     private synchronized void handleTestCaseFinished(TestCaseFinished event) {
         this.handleEndOfFeature(event);
-        //createTestCase(event);
     }
 
     private void cleanSteps() {
@@ -109,9 +123,17 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
             String base64Image = null;
             String stackTrace = null;
             String status = getStatusAsString(event);
-            if (status.equalsIgnoreCase("FAIL")) {
+
+            if (screenshotConfig.contains(Strategy.ON_EACH_STEP)) {
                 base64Image = getBase64Image();
-                stackTrace = truncate(event.result.getErrorMessage(), 200);
+            }
+
+            if (status.equalsIgnoreCase("FAIL")) {
+                if (screenshotConfig.contains(Strategy.ON_FAILURE)) {
+                    base64Image = getBase64Image();
+                }
+
+                stackTrace = truncate(event.result.getErrorMessage(), 5);
             }
 
             steps.get().add(new StepDTO(getStepText(event), stackTrace, base64Image, status));
@@ -120,15 +142,31 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
     }
 
     protected synchronized String getStepText(TestStepFinished event) {
-        String stepText = null;
         PickleStepTestStep pickle = ((PickleStepTestStep) event.testStep);
+
+        StringBuilder stepText = new StringBuilder(pickle.getStepText());
+
         AstNode astNode = testSources.getAstNode(currentFeatureFile.get(), pickle.getStepLine());
         if (astNode != null) {
             Step step = (Step) astNode.node;
-            stepText = step.getKeyword() + pickle.getStepText();
+
+            for (Argument argument: pickle.getStepArgument()) {
+                StringBuilder dstString = new StringBuilder();
+
+                if (argument instanceof PickleTable) {
+                    dstString.append(new DataTableFormatter
+                        (((PickleTable) argument)).generateTabularFormat());
+                } else if (argument instanceof PickleString) {
+                    dstString.append(((PickleString) argument).getContent());
+                }
+
+                stepText = new StringBuilder(dstString.insert(0, stepText + "\n").toString());
+            }
+
+            stepText.insert(0, step.getKeyword());
         }
 
-        return stepText;
+        return stepText.toString();
     }
 
     public static synchronized String truncate(String str, int length) {
