@@ -4,6 +4,8 @@
 
  The Lippia Test Manager adapter allows to ingest cucumber test results into a Lippia Test Manager instance. 
  To have access to a Lippia Test Manager go to [Lippia.io](https://lippia.io/) website.
+  To use it you need to to have a test automation code project and use Cucumber 4. 
+
 
 ## Getting Started
 
