@@ -8,6 +8,7 @@
 
 
 ## Getting Started
+_Please note that this adapter **supports** cucumber >= 4.4.0 && <= 4.8.1_
 
 ### Import dependency
 ```xml
