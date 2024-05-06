@@ -6,6 +6,7 @@
  To have access to a Lippia Test Manager go to [Lippia.io](https://lippia.io/) website.
 
 ## Getting Started
+_Please note that this adapter **supports** cucumber >= 4.4.0 && <= 4.8.1_
 
 ### Import dependency
 ```xml
