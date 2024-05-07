@@ -98,7 +98,10 @@ public abstract class TestManagerAPIAdapter implements ConcurrentEventListener {
         String runId        = runResponseDTO.getId();
         String status       = getStatusAsString(testCase);
         String type         = "SCENARIO";
-        List<String> tags   = testCase.getTestCase().getTags().stream().map(PickleTag::getName).collect(Collectors.toList());
+        List<String> tags   = testCase.getTestCase().getTags().stream()
+                .map(PickleTag::getName)
+                .filter(name -> name.startsWith("@"))
+                .collect(Collectors.toList());
 
         return new TestDTO(title, runId, status, featureName, type, tags, steps.get());
     }
