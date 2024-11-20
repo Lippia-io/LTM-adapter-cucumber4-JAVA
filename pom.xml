@@ -79,24 +79,12 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<distributionManagement>
-		<repository>
-			<id>crowdarNexus-releases</id>
-			<url>https://nexus-v3-repositories.automation.crowdaronline.com/repository/maven-releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>crowdarNexus-snapshots</id>
-			<url>https://nexus-v3-repositories.automation.crowdaronline.com/repository/maven-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 	
 	<repositories>
 		<repository>
-			<id>crowdarRepo</id>
-			<name>crowdar-repository</name>
-			<url>https://nexus-v3-repositories.automation.crowdaronline.com/repository/maven-public/</url>
-		</repository>
+      		<id>central</id>
+      		<url>https://repo.maven.apache.org/maven2</url>
+   		</repository>
 	</repositories>
 
 </project>
